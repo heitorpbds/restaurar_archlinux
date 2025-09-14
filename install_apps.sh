@@ -4,21 +4,21 @@ echo " "
 echo "---------------------"
 echo "Atualizando sistema..."
 
-sudo pacman -Suy
-
 useradd -m -G wheel heitorpbds
 passwd heitorpbds
+
+pacman -Suy
 
 hostnamectl hostname arch-acer
 timedatectl set-timezone America/Sao_Paulo
 
 timedatectl set-ntp TRUE
-echo LANG="en_US.UTF8" >> /etc/locale.conf
+echo LANG="en_US.UTF-8" >> /etc/locale.conf
 localectl set-keymap us
 
 pacman -S reflector sudo vim
 reflector -c Brazil -a 6 --protocol https --sort rate --save /etc/pacman.d/mirrorlist
-
+pacman -Suy
 
 
 echo " "
@@ -64,10 +64,6 @@ pacman -S --needed \
   nvidia-prime \
   xorg-xrandr \
   libreoffice-fresh
-
-  
-
-
 
   
   
