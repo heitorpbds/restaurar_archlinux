@@ -1,5 +1,85 @@
 # restaurar_archlinux
 
+
+
+Ao iniciar o arch se logar como ROOT e iniciar as configuracoes:
+
+nmtw
+hostnamectl hostname arch-acer
+
+Ajustar o arquivo de configuracao do reflector:
+nano /etc/xdg/reflector/reflector.conf
+
+Ajustar o arquivo /etc/pacman.conf
+nano /etc/pacman.conf
+  Descomentar o Color
+  Inserir ILoveCandy
+  Mudar o ParallelDownloads = 5 
+
+passwd heitorpbds
+EDITOR=vim visudo
+  Descomentar a linha %wheel ALL=(ALL:ALL) ALL
+
+Personalizacao gnome
+  bluer my shell
+  dash to docker animater
+  quick setting tweaker
+  compiz windows
+  desktop cube
+  gsconnect
+  burn my windows
+  customize clock on lock screen
+  Forge
+  Gnome Fuzzy App search
+  App menu is back
+  clipboard indicator
+  logo menu
+  text clock
+  user themes 
+  blur my shell
+  compiz a like magic lamp effect
+  dash to dock or dash to dock animated
+  tilling shell
+  caffeine
+  lock keys
+  remove word clock
+  clipboard indicator
+  astra monitor
+  search light
+  App indicator  kstatus notifer
+  places status indicator
+  media control
+  removable drive menu
+  systemd manager
+  open bar
+
+
+  https://www.youtube.com/watch?v=viffvWtMTdo&t=35s
+  https://www.youtube.com/watch?v=z1tUVX0BpIc
+  sound: https://www.youtube.com/watch?v=qVTJX299b5I
+
+
+Fonts: google fonts  
+
+Criar o seguinte arquivo para nvidia:
+
+sudo nano  /etc/X11/xorg.conf.d/10-nvidia-drm-outputclass.conf 
+Section "OutputClass"
+        Identifier "NVIDIA"
+        MatchDriver " nvidia-drm"
+        Driver "nvidia"
+        Option "AllowEmptyInitialConfiguration"
+        Option "UseSSR" "false"
+        Option "AllowExternalGpus" "true"
+        Option "MetaModes" " nvidia-auto-select +0 0"
+        Option "AllowDithering" "false"
+        Option "ProbeAllMonitors" "true"
+        Option "SyncToVBlank" "true"
+EndSection
+"
+nvidia-smi
+lspci | grep -i vga
+
 Instalando o Oh My Zsh?
 
 A instalação do Oh My Zsh pode ser feita de duas formas oficiais, via Curl ou via Wget, iremos utilizar o curl.
