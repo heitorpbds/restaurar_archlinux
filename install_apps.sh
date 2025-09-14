@@ -60,6 +60,12 @@ pacman -S --needed \
   gnome-backgrounds \
   nautilus \
   gdm \
+  nvidia \
+  nvidia-prime \
+  xorg-xrandr \
+  libreoffice-fresh
+
+  
 
 
 
