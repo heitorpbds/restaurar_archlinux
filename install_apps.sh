@@ -79,7 +79,8 @@ paru -S --needed --noconfirm \
     webapp-manager \
     youtube-music-bin \
     visual-studio-code-bin \
-    extension-manager
+    extension-manager \
+    zoom
     
 echo " "
 echo "----------------------------------------"
