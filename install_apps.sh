@@ -46,7 +46,6 @@ pacman -S --needed \
   hplip \
   print-manager \
   system-config-printer \
-#  kdeconnect \
   ffmpegthumbs \
   steam \
   bitwarden \
@@ -63,7 +62,7 @@ pacman -S --needed \
   nvidia \
   nvidia-prime \
   xorg-xrandr \
-  libreoffice-fresh
+  libreoffice-fresh 
 
   
   
