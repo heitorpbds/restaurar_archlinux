@@ -93,8 +93,9 @@ install_additional_packages() {
         zsh zip unzip ffmpeg ntfs-3g docker docker-compose kdenlive audacity hplip
         print-manager system-config-printer ffmpegthumbs steam bitwarden dosfstools
         gnome-builder linux-headers gnome-shell gnome-terminal gnome-control-center
-        gnome-tweaks gnome-backgrounds nautilus gdm firefox 
-        cups cups-pdf hplip system-config-printer sane xsane simple-scan
+        gnome-tweaks gnome-backgrounds nautilus gdm firefox gnome-software
+        cups cups-pdf system-config-printer sane xsane simple-scan
+        gnome-shell-extensions
     )
 
     # Adicionar drivers NVIDIA apenas se o hardware for compatível
@@ -133,7 +134,7 @@ install_aur_packages() {
     log "Instalando pacotes do AUR com Paru..."
     local aur_packages=(
         google-chrome webapp-manager youtube-music-bin visual-studio-code-bin
-        extension-manager zoom hplip-plugin brave-browser
+        extension-manager zoom hplip-plugin brave-browser 
     )
 
     log "Revisando PKGBUILDs antes da instalação..."
@@ -201,5 +202,7 @@ log " Hbilitando impressora."
 sudo usermod -aG lp $USER
 sudo systemctl enable cups
 sudo systemctl start cups
+
+mkdir -p ~/.themes
 
 log "Configuração concluída com sucesso!"
