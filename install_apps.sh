@@ -2,6 +2,7 @@
 
 # Configurações iniciais
 # set -e
+rm /tmp/setup-arch.log  # Remove log antigo, se existir
 LOG_FILE="/tmp/setup-arch.log"
 
 # Função para registrar logs
