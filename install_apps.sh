@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Configurações iniciais
-set -e
+# set -e
 LOG_FILE="/tmp/setup-arch.log"
 
 # Função para registrar logs
@@ -12,8 +12,7 @@ log() {
 # Função para verificar se o comando anterior foi bem-sucedido
 check_error() {
     if [ $? -ne 0 ]; then
-        log "ERRO: $1"
-        exit 1
+        log "AVISO: Falha em '$1'. Continuando com o script."
     fi
 }
 
@@ -79,8 +78,8 @@ install_base_packages() {
     check_error "Falha ao instalar pacotes básicos."
 
     log "Configurando mirrors com Reflector..."
-    reflector -c Brazil -a 6 --protocol https --sort rate --save /etc/pacman.d/mirrorlist
-    check_error "Falha ao configurar mirrors com Reflector."
+    #reflector -c Brazil -a 6 --protocol https --sort rate --save /etc/pacman.d/mirrorlist
+    #check_error "Falha ao configurar mirrors com Reflector."
 
     update_system
 }
@@ -95,7 +94,7 @@ install_additional_packages() {
         gnome-builder linux-headers gnome-shell gnome-terminal gnome-control-center
         gnome-tweaks gnome-backgrounds nautilus gdm firefox gnome-software
         cups cups-pdf system-config-printer sane xsane simple-scan
-        gnome-shell-extensions
+        gnome-shell-extensions btop gparted 
     )
 
     # Adicionar drivers NVIDIA apenas se o hardware for compatível
@@ -173,6 +172,47 @@ setup_oh_my_zsh() {
     chsh -s /bin/zsh heitorpbds
     check_error "Falha ao configurar Zsh como shell padrão."
 }
+# Função para instalar Pyenv
+install_pyenv() {
+    log "Instalando Pyenv e suas dependências..."
+    pacman -S --needed --noconfirm base-devel openssl zlib xz sqlite bzip2 readline ncurses tk libffi llvm git
+    check_error "Falha ao instalar dependências do Pyenv."
+
+    if [ -d /home/heitorpbds/.pyenv ]; then
+        log "Pyenv já está instalado. Pulando."
+        return
+    fi
+
+    log "Clonando repositório do Pyenv para o usuário heitorpbds..."
+    runuser -u heitorpbds -- git clone https://github.com/pyenv/pyenv.git /home/heitorpbds/.pyenv
+    check_error "Falha ao clonar repositório do Pyenv."
+
+    log "Configurando ambiente para Pyenv no .zshrc..."
+    ZSHRC_PATH="/home/heitorpbds/.zshrc"
+    runuser -u heitorpbds -- tee -a "$ZSHRC_PATH" >/dev/null <<'EOF'
+
+# Configuração do Pyenv
+export PYENV_ROOT="$HOME/.pyenv"
+export PATH="$PYENV_ROOT/bin:$PATH"
+eval "$(pyenv init --path)"
+eval "$(pyenv init -)"
+EOF
+
+    check_error "Falha ao configurar .zshrc para Pyenv."
+
+    log "Instalando plugin pyenv-virtualenv..."
+    runuser -u heitorpbds -- git clone https://github.com/pyenv/pyenv-virtualenv.git /home/heitorpbds/.pyenv/plugins/pyenv-virtualenv
+    check_error "Falha ao instalar pyenv-virtualenv."
+
+    log "Configurando pyenv-virtualenv no .zshrc..."
+    runuser -u heitorpbds -- tee -a "$ZSHRC_PATH" >/dev/null <<'EOF'
+
+eval "$(pyenv virtualenv-init -)"
+EOF
+    check_error "Falha ao configurar .zshrc para pyenv-virtualenv."
+
+    log "Pyenv instalado com sucesso."
+}
 
 # Função para iniciar o GNOME
 start_gnome() {
@@ -180,6 +220,36 @@ start_gnome() {
     systemctl enable --now gdm
     check_error "Falha ao habilitar/iniciar o GDM."
     systemctl status gdm --no-pager
+}
+
+configureSSH() {
+    if [ -d /home/heitorpbds/.pyenv ]; then
+        log "SSH já criado."
+        return
+    else
+        log "Gerando SSH."
+        ssh-keygen -t rsa -b 4096 -C "heitor.santos@gmail.com"
+        # cat ~/.ssh/id_rsa.pub visualizar a chave.
+        check_error "Falha ao gerar chave SSH."
+    fi
+}
+
+habilitandoImpressora() {
+    log " Habilitando impressora."
+    sudo usermod -aG lp $USER
+    sudo systemctl enable cups
+    sudo systemctl start cups
+}
+
+install_ollama() {
+    if command -v ollama &>/dev/null; then
+        log "Ollama já está instalado. Pulando instalação."
+        return
+    else
+        log "Instalando Ollama..."
+        curl -fsSL https://ollama.com/install.sh | sh
+        check_error "Falha ao instalar Ollama."
+    fi
 }
 
 # Fluxo principal
@@ -192,17 +262,19 @@ install_additional_packages
 install_paru
 install_aur_packages
 setup_oh_my_zsh
+install_pyenv
+install_ollama
 start_gnome
+configureSSH
+habilitandoImpressora
 
-log "Gerando SSH."
-ssh-keygen -t rsa -b 4096 -C "heitor.santos@gmail.com"
-# cat ~/.ssh/id_rsa.pub visualizar a chave.
 
-log " Hbilitando impressora."
-sudo usermod -aG lp $USER
-sudo systemctl enable cups
-sudo systemctl start cups
+if [ -d /home/heitorpbds/.themes ]; then
+    log "Diretório .themes já existe. Pulando criação."
+else
+    log "Criando diretório .themes no home do usuário heitorpbds..."
+    mkdir -p ~/.themes
+fi
 
-mkdir -p ~/.themes
 
 log "Configuração concluída com sucesso!"
