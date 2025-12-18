@@ -134,7 +134,7 @@ install_aur_packages() {
     log "Instalando pacotes do AUR com Paru..."
     local aur_packages=(
         google-chrome webapp-manager youtube-music-bin visual-studio-code-bin
-        extension-manager zoom hplip-plugin brave-browser 
+        extension-manager zoom hplip-plugin brave-browser tilix
     )
 
     log "Revisando PKGBUILDs antes da instalação..."
