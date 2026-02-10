@@ -107,6 +107,27 @@ install_additional_packages() {
     check_error "Falha ao instalar pacotes adicionais."
 }
 
+# Função para configurar Flatpak e Flathub
+setup_flatpak() {
+    log "Instalando Flatpak..."
+    pacman -S --needed --noconfirm flatpak
+    check_error "Falha ao instalar Flatpak."
+
+    log "Adicionando o repositório Flathub..."
+    flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+    check_error "Falha ao adicionar o repositório Flathub."
+
+    log "Flatpak e Flathub configurados com sucesso."
+
+    flatpak run me.iepure.devtoolbox
+    flatpak run com.heroicgameslauncher.hgl
+    flatpak run md.obsidian.Obsidian
+    flatpak run de.haeckerfelix.Shortwave
+    flatpak run com.github.IsmaelMartinez.teams_for_linux
+
+    # cat ~/.ssh/id_rsa.pub visualizar a chave.
+}
+
 # Função para instalar Paru
 install_paru() {
     log "Instalando Paru..."
@@ -173,46 +194,35 @@ setup_oh_my_zsh() {
     chsh -s /bin/zsh heitorpbds
     check_error "Falha ao configurar Zsh como shell padrão."
 }
-# Função para instalar Pyenv
-install_pyenv() {
-    log "Instalando Pyenv e suas dependências..."
-    pacman -S --needed --noconfirm base-devel openssl zlib xz sqlite bzip2 readline ncurses tk libffi llvm git
-    check_error "Falha ao instalar dependências do Pyenv."
 
-    if [ -d /home/heitorpbds/.pyenv ]; then
-        log "Pyenv já está instalado. Pulando."
+# Função para instalar asdf
+install_asdf() {
+    log "Instalando asdf (gerenciador de versões)..."
+
+    # Dependências base para asdf e para compilar plugins comuns (como python)
+    log "Instalando dependências para asdf e plugins (python, ruby, etc.)..."
+    pacman -S --needed --noconfirm curl git base-devel openssl zlib xz sqlite bzip2 readline ncurses tk libffi llvm
+    check_error "Falha ao instalar dependências do asdf e seus plugins."
+
+    if [ -d /home/heitorpbds/.asdf ]; then
+        log "asdf já está instalado. Pulando."
         return
     fi
 
-    log "Clonando repositório do Pyenv para o usuário heitorpbds..."
-    runuser -u heitorpbds -- git clone https://github.com/pyenv/pyenv.git /home/heitorpbds/.pyenv
-    check_error "Falha ao clonar repositório do Pyenv."
+    log "Clonando repositório do asdf para o usuário heitorpbds..."
+    runuser -u heitorpbds -- git clone https://github.com/asdf-vm/asdf.git /home/heitorpbds/.asdf
+    check_error "Falha ao clonar repositório do asdf."
 
-    log "Configurando ambiente para Pyenv no .zshrc..."
+    log "Configurando ambiente para asdf no .zshrc..."
     ZSHRC_PATH="/home/heitorpbds/.zshrc"
     runuser -u heitorpbds -- tee -a "$ZSHRC_PATH" >/dev/null <<'EOF'
 
-# Configuração do Pyenv
-export PYENV_ROOT="$HOME/.pyenv"
-export PATH="$PYENV_ROOT/bin:$PATH"
-eval "$(pyenv init --path)"
-eval "$(pyenv init -)"
+# Configuração do asdf
+. "$HOME/.asdf/asdf.sh"
 EOF
+    check_error "Falha ao configurar .zshrc para asdf."
 
-    check_error "Falha ao configurar .zshrc para Pyenv."
-
-    log "Instalando plugin pyenv-virtualenv..."
-    runuser -u heitorpbds -- git clone https://github.com/pyenv/pyenv-virtualenv.git /home/heitorpbds/.pyenv/plugins/pyenv-virtualenv
-    check_error "Falha ao instalar pyenv-virtualenv."
-
-    log "Configurando pyenv-virtualenv no .zshrc..."
-    runuser -u heitorpbds -- tee -a "$ZSHRC_PATH" >/dev/null <<'EOF'
-
-eval "$(pyenv virtualenv-init -)"
-EOF
-    check_error "Falha ao configurar .zshrc para pyenv-virtualenv."
-
-    log "Pyenv instalado com sucesso."
+    log "asdf instalado com sucesso. Para usar, adicione plugins com 'asdf plugin add <nome>' e instale versões com 'asdf install <nome> <versao>'."
 }
 
 # Função para iniciar o GNOME
@@ -224,8 +234,8 @@ start_gnome() {
 }
 
 configureSSH() {
-    if [ -d /home/heitorpbds/.pyenv ]; then
-        log "SSH já criado."
+    if [ -f /home/heitorpbds/.ssh/id_rsa ]; then
+        log "Chave SSH já existe em /home/heitorpbds/.ssh/id_rsa. Pulando."
         return
     else
         log "Gerando SSH."
@@ -260,15 +270,20 @@ setup_system
 create_user
 install_base_packages
 install_additional_packages
+setup_flatpak
 install_paru
 install_aur_packages
 setup_oh_my_zsh
-install_pyenv
+install_asdf
 install_ollama
 start_gnome
 configureSSH
 habilitandoImpressora
 
+# Criar diretórios de usuário
+log "Criando diretórios de usuário (ex: .themes)..."
+runuser -u heitorpbds -- mkdir -p /home/heitorpbds/.themes
+check_error "Falha ao criar diretório .themes."
 
 if [ -d /home/heitorpbds/.themes ]; then
     log "Diretório .themes já existe. Pulando criação."
