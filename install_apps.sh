@@ -90,12 +90,10 @@ install_additional_packages() {
     log "Instalando pacotes adicionais..."
     local packages=(
         xdg-user-dirs fastfetch git base-devel curl wget nano vim networkmanager
-        zsh zip unzip ffmpeg ntfs-3g docker docker-compose kdenlive audacity hplip
+        zip unzip ffmpeg ntfs-3g docker docker-compose hplip
         print-manager system-config-printer ffmpegthumbs steam bitwarden dosfstools
-        gnome-builder linux-headers gnome-shell gnome-terminal gnome-control-center
-        gnome-tweaks gnome-backgrounds nautilus gdm firefox gnome-software
-        cups cups-pdf system-config-printer sane xsane simple-scan
-        gnome-shell-extensions btop gparted 
+        gnome-builder linux-headers gnome-control-center
+        gnome-tweaks cups cups-pdf btop gparted 
     )
 
     # Adicionar drivers NVIDIA apenas se o hardware for compatível
@@ -155,7 +153,7 @@ install_aur_packages() {
     log "Instalando pacotes do AUR com Paru..."
     local aur_packages=(
         google-chrome webapp-manager youtube-music-bin visual-studio-code-bin
-        extension-manager zoom hplip-plugin brave-browser tilix
+        extension-manager zoom hplip-plugin brave-browser tilix SublimeText
     )
 
     log "Revisando PKGBUILDs antes da instalação..."
@@ -265,20 +263,20 @@ install_ollama() {
 
 # Fluxo principal
 log "Iniciando configuração do sistema Arch Linux..."
-update_system
-setup_system
-create_user
-install_base_packages
-install_additional_packages
-setup_flatpak
-install_paru
-install_aur_packages
-setup_oh_my_zsh
+#update_system
+#setup_system
+#create_user
+#install_base_packages
+#install_additional_packages
+#setup_flatpak
+#install_paru
+#install_aur_packages
+#setup_oh_my_zsh
 install_asdf
-install_ollama
-start_gnome
-configureSSH
-habilitandoImpressora
+#install_ollama
+#start_gnome
+#configureSSH
+#habilitandoImpressora
 
 # Criar diretórios de usuário
 log "Criando diretórios de usuário (ex: .themes)..."
