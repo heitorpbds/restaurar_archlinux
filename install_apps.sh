@@ -292,3 +292,9 @@ fi
 
 
 log "Configuração concluída com sucesso!"
+
+
+# Aplicativo para instalar e configurar 
+# perifericos Logitech: https://openlogi.org/ - https://github.com/AprilNEA/OpenLogi
+
+# RomM: Organizador de jogos - https://www.youtube.com/watch?v=mzJsvLgVoRQ - https://docs.romm.app/latest/getting-started/quick-start/
