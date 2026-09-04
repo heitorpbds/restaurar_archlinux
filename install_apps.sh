@@ -79,8 +79,8 @@ install_base_packages() {
     check_error "Falha ao instalar pacotes básicos."
 
     log "Configurando mirrors com Reflector..."
-    #reflector -c Brazil -a 6 --protocol https --sort rate --save /etc/pacman.d/mirrorlist
-    #check_error "Falha ao configurar mirrors com Reflector."
+    reflector -c Brazil -a 6 --protocol https --sort rate --save /etc/pacman.d/mirrorlist
+    check_error "Falha ao configurar mirrors com Reflector."
 
     update_system
 }
@@ -115,13 +115,17 @@ setup_flatpak() {
     flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
     check_error "Falha ao adicionar o repositório Flathub."
 
-    log "Flatpak e Flathub configurados com sucesso."
+    log "Instalando aplicativos Flatpak..."
+    local flatpak_apps=(
+        me.iepure.devtoolbox
+        com.heroicgameslauncher.hgl
+        md.obsidian.Obsidian
+        de.haeckerfelix.Shortwave
+    )
+    flatpak install --system --or-update --assumeyes flathub "${flatpak_apps[@]}"
+    check_error "Falha ao instalar aplicativos Flatpak."
 
-    flatpak run me.iepure.devtoolbox
-    flatpak run com.heroicgameslauncher.hgl
-    flatpak run md.obsidian.Obsidian
-    flatpak run de.haeckerfelix.Shortwave
-    flatpak run com.github.IsmaelMartinez.teams_for_linux
+    log "Flatpak e Flathub configurados com sucesso."
 
     # cat ~/.ssh/id_rsa.pub visualizar a chave.
 }
@@ -153,7 +157,7 @@ install_aur_packages() {
     log "Instalando pacotes do AUR com Paru..."
     local aur_packages=(
         google-chrome webapp-manager youtube-music-bin visual-studio-code-bin
-        extension-manager zoom hplip-plugin brave-browser tilix SublimeText
+        extension-manager hplip-plugin brave-browser rustdesk-bin oversteer tilix SublimeText
     )
 
     log "Revisando PKGBUILDs antes da instalação..."
@@ -193,34 +197,30 @@ setup_oh_my_zsh() {
     check_error "Falha ao configurar Zsh como shell padrão."
 }
 
-# Função para instalar asdf
-install_asdf() {
-    log "Instalando asdf (gerenciador de versões)..."
+# Função para instalar mise
+install_mise() {
+    log "Instalando mise (gerenciador de versões)..."
 
-    # Dependências base para asdf e para compilar plugins comuns (como python)
-    log "Instalando dependências para asdf e plugins (python, ruby, etc.)..."
-    pacman -S --needed --noconfirm curl git base-devel openssl zlib xz sqlite bzip2 readline ncurses tk libffi llvm
-    check_error "Falha ao instalar dependências do asdf e seus plugins."
-
-    if [ -d /home/heitorpbds/.asdf ]; then
-        log "asdf já está instalado. Pulando."
+    if command -v mise &>/dev/null; then
+        log "mise já está instalado. Pulando."
         return
     fi
 
-    log "Clonando repositório do asdf para o usuário heitorpbds..."
-    runuser -u heitorpbds -- git clone https://github.com/asdf-vm/asdf.git /home/heitorpbds/.asdf
-    check_error "Falha ao clonar repositório do asdf."
+    pacman -S --needed --noconfirm mise
+    check_error "Falha ao instalar mise."
 
-    log "Configurando ambiente para asdf no .zshrc..."
+    log "Configurando ambiente para mise no .zshrc..."
     ZSHRC_PATH="/home/heitorpbds/.zshrc"
-    runuser -u heitorpbds -- tee -a "$ZSHRC_PATH" >/dev/null <<'EOF'
+    if ! grep -Fq 'eval "$(mise activate zsh)"' "$ZSHRC_PATH" 2>/dev/null; then
+        runuser -u heitorpbds -- tee -a "$ZSHRC_PATH" >/dev/null <<'EOF'
 
-# Configuração do asdf
-. "$HOME/.asdf/asdf.sh"
+# Configuração do mise
+eval "$(mise activate zsh)"
 EOF
-    check_error "Falha ao configurar .zshrc para asdf."
+        check_error "Falha ao configurar .zshrc para mise."
+    fi
 
-    log "asdf instalado com sucesso. Para usar, adicione plugins com 'asdf plugin add <nome>' e instale versões com 'asdf install <nome> <versao>'."
+    log "mise instalado com sucesso. Use 'mise use <ferramenta>@<versao>' para configurar versões."
 }
 
 # Função para iniciar o GNOME
@@ -263,20 +263,20 @@ install_ollama() {
 
 # Fluxo principal
 log "Iniciando configuração do sistema Arch Linux..."
-#update_system
-#setup_system
-#create_user
-#install_base_packages
-#install_additional_packages
-#setup_flatpak
-#install_paru
-#install_aur_packages
-#setup_oh_my_zsh
-install_asdf
-#install_ollama
-#start_gnome
-#configureSSH
-#habilitandoImpressora
+update_system
+setup_system
+create_user
+install_base_packages
+install_additional_packages
+setup_flatpak
+install_paru
+install_aur_packages
+setup_oh_my_zsh
+install_mise
+install_ollama
+start_gnome
+configureSSH
+habilitandoImpressora
 
 # Criar diretórios de usuário
 log "Criando diretórios de usuário (ex: .themes)..."
