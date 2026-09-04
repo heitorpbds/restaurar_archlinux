@@ -189,7 +189,7 @@ install_additional_packages() {
     
     local packages=(
         xdg-user-dirs fastfetch base-devel curl wget nano vim networkmanager
-        zip unzip ffmpeg ntfs-3g docker docker-compose hplip
+        zip unzip ffmpeg ntfs-3g docker docker-compose hplip zsh
         print-manager system-config-printer ffmpegthumbs steam bitwarden dosfstools
         gnome-builder linux-headers gnome-control-center
         gnome-tweaks cups cups-pdf btop gparted
@@ -311,8 +311,18 @@ setup_oh_my_zsh() {
     fi
     
     log "Baixando script de instalação..."
-    curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh \
-        -o /tmp/install-ohmyzsh.sh || die "Falha ao baixar Oh My Zsh"
+    if ! curl --http1.1 --connect-timeout 15 --max-time 120 \
+        --retry 5 --retry-delay 5 --retry-all-errors -fsSL \
+        https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh \
+        -o /tmp/install-ohmyzsh.sh; then
+        log "Falha no download direto. Tentando obter Oh My Zsh via Git..."
+        rm -rf /tmp/ohmyzsh
+        runuser -u "${USERNAME}" -- git clone --depth=1 \
+            https://github.com/ohmyzsh/ohmyzsh.git /tmp/ohmyzsh || \
+            die "Falha ao baixar Oh My Zsh"
+        cp /tmp/ohmyzsh/tools/install.sh /tmp/install-ohmyzsh.sh
+        chown "${USERNAME}:${USERNAME}" /tmp/install-ohmyzsh.sh
+    fi
     
     log "Executando instalação..."
     runuser -u "${USERNAME}" -- sh /tmp/install-ohmyzsh.sh || die "Falha ao instalar Oh My Zsh"
