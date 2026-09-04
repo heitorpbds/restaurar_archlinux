@@ -130,7 +130,7 @@ install_nvidia_drivers() {
         log "⚠️  GPU Pascal detectada (GTX 9xx/10xx series)."
         log "⚠️  Drivers NVIDIA 590+ NÃO são compatíveis com esta GPU."
         log "⚠️  Instalando driver legacy 580xx do AUR..."
-        
+
         # Headers primeiro (obrigatório para DKMS)
         log "Instalando linux-headers..."
         pacman -S --needed --noconfirm linux-headers || die "Falha ao instalar linux-headers"
@@ -307,28 +307,28 @@ setup_oh_my_zsh() {
     
     if [[ -d /home/${USERNAME}/.oh-my-zsh ]]; then
         log "Oh My Zsh já está instalado."
-        return
-    fi
-    
-    log "Baixando script de instalação..."
-    if ! curl --http1.1 --connect-timeout 15 --max-time 120 \
-        --retry 5 --retry-delay 5 --retry-all-errors -fsSL \
-        https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh \
-        -o /tmp/install-ohmyzsh.sh; then
-        log "Falha no download direto. Tentando obter Oh My Zsh via Git..."
-        rm -rf /tmp/ohmyzsh
-        runuser -u "${USERNAME}" -- git clone --depth=1 \
-            https://github.com/ohmyzsh/ohmyzsh.git /tmp/ohmyzsh || \
-            die "Falha ao baixar Oh My Zsh"
-        cp /tmp/ohmyzsh/tools/install.sh /tmp/install-ohmyzsh.sh
-        chown "${USERNAME}:${USERNAME}" /tmp/install-ohmyzsh.sh
-    fi
-    
-    log "Executando instalação..."
-    runuser -u "${USERNAME}" -- sh /tmp/install-ohmyzsh.sh || die "Falha ao instalar Oh My Zsh"
-    
+    else
+        log "Baixando script de instalação..."
+        if ! curl --http1.1 --connect-timeout 15 --max-time 120 \
+            --retry 5 --retry-delay 5 --retry-all-errors -fsSL \
+            https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh \
+            -o /tmp/install-ohmyzsh.sh; then
+            log "Falha no download direto. Tentando obter Oh My Zsh via Git..."
+            rm -rf /tmp/ohmyzsh
+            runuser -u "${USERNAME}" -- git clone --depth=1 \
+                https://github.com/ohmyzsh/ohmyzsh.git /tmp/ohmyzsh || \
+                die "Falha ao baixar Oh My Zsh"
+            cp /tmp/ohmyzsh/tools/install.sh /tmp/install-ohmyzsh.sh
+            chown "${USERNAME}:${USERNAME}" /tmp/install-ohmyzsh.sh
+        fi
+
+        log "Executando instalação..."
+        runuser -u "${USERNAME}" -- env CHSH=no RUNZSH=no \
+                sh /tmp/install-ohmyzsh.sh || die "Falha ao instalar Oh My Zsh"
+            fi
+
     log "Configurando Zsh como shell padrão..."
-    chsh -s /bin/zsh "${USERNAME}" || die "Falha ao configurar Zsh"
+    chsh -s /usr/bin/zsh "${USERNAME}" || die "Falha ao configurar Zsh"
 }
 
 # =============================================================================
