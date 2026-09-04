@@ -27,6 +27,10 @@ die() {
     exit 1
 }
 
+systemd_running() {
+    [[ "$(ps -p 1 -o comm= 2>/dev/null)" == "systemd" ]]
+}
+
 check_nvidia() {
     log "Verificando hardware NVIDIA..."
     if lspci -k -d ::03xx | grep -i nvidia > /dev/null 2>&1; then
@@ -410,8 +414,8 @@ configure_ssh() {
         log "Aviso: Falha ao gerar chave SSH"
     
     log "Chave pública gerada em ${SSH_DIR}/id_rsa.pub"
-    log "Conteúdo da chave pública:"
-    cat "${SSH_DIR}/id_rsa.pub"
+    #log "Conteúdo da chave pública:"
+    # cat "${SSH_DIR}/id_rsa.pub"
 }
 
 # =============================================================================
@@ -424,7 +428,11 @@ setup_printer() {
     usermod -aG lp "${USERNAME}" || log "Aviso: Falha ao adicionar usuário ao grupo lp"
     
     systemctl enable cups || die "Falha ao habilitar CUPS"
-    systemctl start cups || die "Falha ao iniciar CUPS"
+    if systemd_running; then
+        systemctl start cups || die "Falha ao iniciar CUPS"
+    else
+        log "Aviso: systemd não está ativo. CUPS será iniciado no próximo boot."
+    fi
     
     # Habilitar descoberta de impressora na rede
     systemctl enable cups-browsed || log "Aviso: Falha ao habilitar cups-browsed"
