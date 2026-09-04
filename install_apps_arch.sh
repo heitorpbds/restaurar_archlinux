@@ -194,9 +194,9 @@ install_additional_packages() {
     local packages=(
         xdg-user-dirs fastfetch base-devel curl wget nano vim networkmanager
         zip unzip ffmpeg ntfs-3g docker docker-compose hplip zsh
-        print-manager system-config-printer ffmpegthumbs steam bitwarden dosfstools
+        print-manager system-config-printer cups-browsed ffmpegthumbs steam bitwarden dosfstools
         gnome-builder linux-headers gnome-control-center
-        gnome-tweaks cups cups-pdf btop gparted
+        gnome-tweaks gdm cups cups-pdf btop gparted
         xorg-xrandr xorg-server xorg-apps
     )
     
@@ -445,9 +445,13 @@ setup_printer() {
 start_gnome() {
     log "Habilitando GNOME Display Manager (GDM)..."
     
-    systemctl enable gdm || die "Falha ao habilitar GDM"
-    
-    log "GDM habilitado. Será iniciado no próximo boot."
+    systemctl enable gdm || log "Aviso: Falha ao habilitar GDM neste ambiente"
+
+    if systemd_running; then
+        log "GDM habilitado. Será iniciado no próximo boot."
+    else
+        log "Aviso: systemd não está ativo. GDM será iniciado no próximo boot."
+    fi
 }
 
 # =============================================================================
