@@ -230,40 +230,53 @@ setup_flatpak() {
 # Paru (AUR helper)
 # =============================================================================
 
+configure_aur_sudo() {
+    cat > /etc/sudoers.d/99-arch-setup-aur <<EOF
+${USERNAME} ALL=(root) NOPASSWD: /usr/bin/pacman
+EOF
+    chmod 440 /etc/sudoers.d/99-arch-setup-aur
+    visudo -cf /etc/sudoers.d/99-arch-setup-aur >/dev/null || \
+        die "Falha ao validar permissões temporárias do Paru"
+    trap cleanup_aur_sudo EXIT
+}
+
 install_paru() {
     log "Instalando Paru..."
+
+    configure_aur_sudo
     
     if command -v paru &>/dev/null; then
         log "Paru já está instalado."
         return
     fi
     
+    local user_uid
+    local user_gid
+    user_uid=$(id -u "${USERNAME}") || die "Usuário ${USERNAME} não existe"
+    user_gid=$(id -g "${USERNAME}") || die "Não foi possível obter o grupo de ${USERNAME}"
+
     cd /tmp || die "Falha ao acessar /tmp"
     
     if [[ -d paru && -d paru/.git ]]; then
-        if [[ "$(stat -c '%u' paru)" == "$(id -u)" ]]; then
-            log "Repositório Paru já existe. Atualizando..."
-            cd paru
-            git pull
-        else
-            log "Repositório Paru pertence a outro usuário. Recriando..."
-            rm -rf paru
-            git clone https://aur.archlinux.org/paru.git || die "Falha ao clonar Paru"
-            cd paru
-        fi
+        log "Repositório Paru já existe. Atualizando..."
+        chown -R "${user_uid}:${user_gid}" paru
+        runuser -u "${USERNAME}" -- git -C paru pull || die "Falha ao atualizar Paru"
     else
         if [[ -e paru ]]; then
             log "Caminho /tmp/paru não é um clone válido. Removendo..."
             rm -rf paru
         fi
         log "Clonando repositório do Paru..."
-        git clone https://aur.archlinux.org/paru.git || die "Falha ao clonar Paru"
-        cd paru
+        runuser -u "${USERNAME}" -- git clone https://aur.archlinux.org/paru.git || die "Falha ao clonar Paru"
     fi
     
+    pacman -S --needed --noconfirm rust || die "Falha ao instalar dependência de compilação do Paru"
+
     log "Compilando e instalando Paru..."
-    makepkg -si --noconfirm || die "Falha ao compilar Paru"
-    
+    runuser -u "${USERNAME}" -- bash -c 'cd /tmp/paru && makepkg --noconfirm' || \
+        die "Falha ao compilar Paru"
+    pacman -U --noconfirm /tmp/paru/*.pkg.tar.* || die "Falha ao instalar pacote do Paru"
+
     cd /
 }
 
@@ -281,7 +294,7 @@ install_aur_packages() {
     )
     
     # Instalação em lote (sem prompts individuais para automação)
-    paru -S --needed --noconfirm "${aur_packages[@]}" || \
+    runuser -u "${USERNAME}" -- paru -S --needed --noconfirm "${aur_packages[@]}" || \
         log "Aviso: Falha ao instalar alguns pacotes AUR"
 }
 
@@ -348,7 +361,7 @@ install_ollama() {
     
     # Método preferencial: usar pacote AUR (mais rastreável que curl | sh)
     if command -v paru &>/dev/null; then
-        paru -S --needed --noconfirm ollama || {
+        runuser -u "${USERNAME}" -- paru -S --needed --noconfirm ollama || {
             log "Falha ao instalar Ollama via AUR. Tentando método oficial..."
             curl -fsSL https://ollama.com/install.sh | sh || die "Falha ao instalar Ollama"
         }
@@ -358,6 +371,11 @@ install_ollama() {
     
     systemctl enable ollama || log "Aviso: Falha ao habilitar serviço Ollama"
     systemctl start ollama || log "Aviso: Falha ao iniciar serviço Ollama"
+}
+
+cleanup_aur_sudo() {
+    rm -f /etc/sudoers.d/99-arch-setup-aur
+    trap - EXIT
 }
 
 # =============================================================================
@@ -450,6 +468,7 @@ main() {
     setup_oh_my_zsh
     install_mise
     install_ollama
+    cleanup_aur_sudo
     configure_ssh
     setup_printer
     setup_user_dirs
