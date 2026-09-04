@@ -57,6 +57,9 @@ get_nvidia_gpu_family() {
 # =============================================================================
 
 update_system() {
+    # Habilitar repositório multilib se estiver comentado
+    sed -i "/\[multilib\]/{n;s/^#//g}; s/^#\[multilib\]/[multilib]/" /etc/pacman.conf
+    pacman -Syy --needed --noconfirm || die "Falha ao atualizar banco de dados de pacotes"
     log "Atualizando banco de dados de pacotes e sistema..."
     pacman -Syu --needed --noconfirm || die "Falha ao atualizar sistema"
 }
@@ -237,11 +240,22 @@ install_paru() {
     
     cd /tmp || die "Falha ao acessar /tmp"
     
-    if [[ -d paru ]]; then
-        log "Repositório Paru já existe. Atualizando..."
-        cd paru
-        git pull
+    if [[ -d paru && -d paru/.git ]]; then
+        if [[ "$(stat -c '%u' paru)" == "$(id -u)" ]]; then
+            log "Repositório Paru já existe. Atualizando..."
+            cd paru
+            git pull
+        else
+            log "Repositório Paru pertence a outro usuário. Recriando..."
+            rm -rf paru
+            git clone https://aur.archlinux.org/paru.git || die "Falha ao clonar Paru"
+            cd paru
+        fi
     else
+        if [[ -e paru ]]; then
+            log "Caminho /tmp/paru não é um clone válido. Removendo..."
+            rm -rf paru
+        fi
         log "Clonando repositório do Paru..."
         git clone https://aur.archlinux.org/paru.git || die "Falha ao clonar Paru"
         cd paru
